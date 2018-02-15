@@ -4,7 +4,7 @@ Tariffs
 This library provides a Python toolkit for analysing tariffs for electricity, gas and other utility services.
 
 Use cases include:
-- assessing the bill savings associated with energy efficiency, solar or active load management
+- assessing the bill savings associated with energy efficiency, solar or load management
 - assessing the benefits of tariff switching
 
 Supported tariff components include:
@@ -47,7 +47,7 @@ Firstly define your tariff as a JSON data structure e.g. for a block tariff you 
 }
 ```
 
-Next construct the Tariff, using a library called Odin
+Next construct the Tariff, using a library called [Odin](https://www.github.com/python-odin/odin/)
 
 ```python
 from odin.codecs import json_codec
@@ -65,7 +65,7 @@ datetime,electricity_imported
 etc
 ```
 
-Next import the CSV using as a pandas DataFrame, making sure to include a parser to parse the datetimes appropriately:
+Next import the CSV using as a [Pandas DataFrame](http://pandas.pydata.org/), making sure to include a parser to parse the datetimes appropriately:
 
 ```python
 parser = lambda t: datetime.datetime.strptime(t, '%d/%m/%Y %H:%M')
