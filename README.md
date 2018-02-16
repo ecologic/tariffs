@@ -18,7 +18,7 @@ Supported tariff components include:
 
 Installation
 ------------
-Best to install the package direct from the repo until a production-ready version is released.
+At this stage it is best to install the package directly from the repo until a production-ready version is released.
 
 ```
 pip install git+https://www.github.com/ecologic/tariffs
@@ -26,7 +26,7 @@ pip install git+https://www.github.com/ecologic/tariffs
 
 Quickstart
 ----------
-Firstly define your tariff as a JSON data structure e.g. for a block tariff you could apply the below:
+Firstly define your tariff as a JSON data structure e.g. for a very simple block tariff you could apply the tariff below:
 
 ```javascript
 {
@@ -47,27 +47,21 @@ Firstly define your tariff as a JSON data structure e.g. for a block tariff you 
 }
 ```
 
-Next construct the Tariff, using a library called [Odin](https://www.github.com/python-odin/odin/)
-
-```python
-from odin.codecs import json_codec
-
-with open('tariff.json') as f:
-    tariff = json_codec.loads(f, Tariff)
-```
-
-Next create a CSV file with the load data
+Next create a CSV file with the time-stamped load data as shown.
 
 ```
 datetime,electricity_imported
 01/01/2018 00:00,0.1
 01/01/2018 00:30,0.2
-etc
+..etc
 ```
 
-Next import the CSV using as a [Pandas DataFrame](http://pandas.pydata.org/), making sure to include a parser to parse the datetimes appropriately:
+Next import the CSV as as a [Pandas DataFrame](http://pandas.pydata.org/), making sure to parse the datetime field appropriately:
 
 ```python
+import pandas
+import datetime
+
 parser = lambda t: datetime.datetime.strptime(t, '%d/%m/%Y %H:%M')
 
 with open('meter_data.csv') as f:
@@ -75,10 +69,26 @@ with open('meter_data.csv') as f:
                                  date_parser=parser)
 ```
 
-Next apply the tariff to the meter data
+Next construct the Tariff as an [Odin Resource](https://www.github.com/python-odin/odin/) and apply it to the load data as shown.
 
 ```python
+from odin.codecs import json_codec
+from tariffs import Tariff
+
+with open('tariff.json') as f:
+    tariff = json_codec.loads(f, Tariff)
+
 bill = tariff.apply(meter_data)
 ```
 
-This is an early beta and we'll add documentation later but for now you can review the tests for examples of common tariff structures and their application
+To-do
+-----
+- Work on tests to shake out any remaining bugs
+- Refactor for reduced processing time
+- Re-structure the cost output into a structured Odin Resource
+- Add support for Green Button and other serialised consumption data formats
+- Add support for ratchet tariffs
+
+This is an early beta and we'll add documentation later but for now you can review the tests for examples of common tariff structures and their application.
+
+Pull requests welcome.
