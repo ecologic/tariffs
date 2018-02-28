@@ -1,6 +1,6 @@
 from tariffs.tariff import Tariff
 import pytest
-from odin.codecs import dict_codec
+from odin.codecs import dict_codec, json_codec
 import pandas
 import datetime
 
@@ -26,10 +26,10 @@ class TestTariff(object):
                         "rate_bands": [
                             {
                                 "limit": 10,
-                                "rate": 0.1
+                                "rate": 1.0
                             },
                             {
-                                "rate": 0.01
+                                "rate": 1.0
                             }
                         ]
                     }
@@ -48,17 +48,17 @@ class TestTariff(object):
             {
                 "charges": [
                     {
-                        "rate": 0.1,
+                        "rate": 1.0,
                         "season": {
                             "name": "summer",
                             "from_month": 1,
                             "from_day": 1,
-                            "to_month": 4,
-                            "to_day": 1
+                            "to_month": 3,
+                            "to_day": 31
                         }
                     },
                     {
-                        "rate": 0.1,
+                        "rate": 1.0,
                         "season": {
                             "name": "winter",
                             "from_month": 4,
@@ -82,7 +82,7 @@ class TestTariff(object):
             {
                 "charges": [
                     {
-                        "rate": 0.1,
+                        "rate": 1.0,
                         "time": {
                             "name": "peak",
                             "periods": [
@@ -96,7 +96,7 @@ class TestTariff(object):
                         }
                     },
                     {
-                        "rate": 0.1,
+                        "rate": 1.0,
                         "time": {
                             "name": "shoulder",
                             "periods": [
@@ -116,7 +116,7 @@ class TestTariff(object):
                         }
                     },
                     {
-                        "rate": 0.1,
+                        "rate": 1.0,
                         "time": {
                             "name": "off-peak",
                             "periods": [
@@ -139,7 +139,7 @@ class TestTariff(object):
                 "service": "electricity",
                 "consumption_unit": "kWh",
                 "demand_unit": "kVA",
-                "billing_period": "monthly",
+                "billing_period": "monthly"
             }, Tariff
         )
         return tou_tariff
@@ -153,15 +153,15 @@ class TestTariff(object):
                         "rate_schedule": [
                             {
                                 "datetime":"2018-01-01T00:00:00Z",
-                                "rate": 0.1
+                                "rate": 1.0
                             },
                             {
-                                "datetime":"2018-01-01T00:30:00Z",
-                                "rate": 0.2
+                                "datetime":"2018-06-01T00:30:00Z",
+                                "rate": 1.0
                             },
                             {
-                                "datetime": "2018-01-01T01:00:00Z",
-                                "rate": 0.3
+                                "datetime": "2018-12-31T01:00:00Z",
+                                "rate": 1.0
                             }
                         ]
                     }
@@ -179,7 +179,7 @@ class TestTariff(object):
             {
                 "charges": [
                     {
-                        "rate": -0.1,
+                        "rate": -1.0,
                         "meter": "electricity_exported"
                     }
                 ],
@@ -194,7 +194,7 @@ class TestTariff(object):
             {
                 "charges": [
                     {
-                        "rate": 0.1,
+                        "rate": 1.0,
                         "type": "demand"
                     }
                 ],
@@ -206,31 +206,31 @@ class TestTariff(object):
         return demand_tariff
 
     def test_block_tariff(self, block_tariff, meter_data):
-        expected_bill = 1.0
+        expected_bill = 35040.0
         actual_bill = block_tariff.apply(meter_data)
         assert actual_bill == expected_bill
 
     def test_seasonal_tariff(self, seasonal_tariff, meter_data):
-        expected_bill = 1.0
+        expected_bill = 35040.0
         actual_bill = seasonal_tariff.apply(meter_data)
         assert actual_bill == expected_bill
 
     def test_tou_tariff(self, tou_tariff, meter_data):
-        expected_bill = 1.0
+        expected_bill = 35040.0
         actual_bill = tou_tariff.apply(meter_data)
         assert actual_bill == expected_bill
 
     def test_scheduled_tariff(self, scheduled_tariff, meter_data):
-        expected_bill = 1.0
+        expected_bill = 35040.0
         actual_bill = scheduled_tariff.apply(meter_data)
         assert actual_bill == expected_bill
 
     def test_supply_payment(self, supply_payment_tariff, meter_data):
-        expected_bill = 1.0
+        expected_bill = -35040.0
         actual_bill = supply_payment_tariff.apply(meter_data)
         assert actual_bill == expected_bill
 
     def test_demand_tariff(self, demand_tariff, meter_data):
-        expected_bill = 1.0
+        expected_bill = 12.0
         actual_bill = demand_tariff.apply(meter_data)
         assert actual_bill == expected_bill

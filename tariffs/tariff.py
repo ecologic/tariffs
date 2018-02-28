@@ -101,7 +101,7 @@ class Time(odin.Resource):
 
 class ScheduleItem(odin.Resource):
     """An item in a scheduled or real-time pricing rate structure"""
-    datetime = odin.NaiveDateTimeField()
+    datetime = odin.NaiveDateTimeField(ignore_timezone=True)
     rate = odin.FloatField()
 
 
@@ -237,7 +237,7 @@ class Tariff(odin.Resource):
                         if charge.time and charge.season:
                             found = False
                             if datetime.date(year=dt.year, month=charge.season.from_month, day=charge.season.from_day) \
-                                    < dt.date() <= datetime.date(year=dt.year, month=charge.season.to_month,
+                                    <= dt.date() <= datetime.date(year=dt.year, month=charge.season.to_month,
                                                                  day=charge.season.to_day):
                                 for period in charge.time.periods:
                                     if datetime.time(hour=period.from_hour, minute=period.from_minute) < time <= datetime.time(
@@ -251,7 +251,7 @@ class Tariff(odin.Resource):
                                 charge_array[self.service + charge_type + charge.season.name + charge.time.name].append(0.0)
                         elif charge.season and not charge.time:
                             if datetime.date(year=dt.year, month=charge.season.from_month, day=charge.season.from_day)\
-                                    < dt.date() <= datetime.date(year=dt.year, month=charge.season.to_month,
+                                    <= dt.date() <= datetime.date(year=dt.year, month=charge.season.to_month,
                                                                  day=charge.season.to_day):
                                 charge_array, block_accum_dict = self.calc_charge(
                                     self.service + charge_type + charge.season.name, row, charge, charge_array, block_accum_dict)
@@ -260,7 +260,8 @@ class Tariff(odin.Resource):
                         elif charge.time and not charge.season:
                             found = False
                             for period in charge.time.periods:
-                                if datetime.time(hour=period.from_hour) < time <= datetime.time(hour=period.to_hour):
+                                if datetime.time(hour=period.from_hour, minute=period.from_minute) <= time <= \
+                                        datetime.time(hour=period.to_hour, minute=period.to_minute):
                                     charge_array, block_accum_dict = self.calc_charge(
                                         self.service + charge_type + charge.time.name, row, charge, charge_array, block_accum_dict)
                                     found = True
@@ -268,7 +269,7 @@ class Tariff(odin.Resource):
                                 charge_array[self.service + charge_type + charge.time.name].append(0.0)
                         elif charge.rate_schedule:
                             for schedule_item in charge.rate_schedule:
-                                if dt <= schedule_item.datetime:
+                                if dt.to_pydatetime() < schedule_item.datetime:
                                     charge_array[self.service + charge_type + 'scheduled'].append(schedule_item.rate * float(row[charge.meter]))
                                     break
                         else:

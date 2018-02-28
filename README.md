@@ -83,8 +83,6 @@ bill = tariff.apply(meter_data)
 
 To-do
 -----
-- Work on tests to shake out any remaining bugs
-- Refactor for reduced processing time
 - Re-structure the cost output into a structured Odin Resource
 - Add support for Green Button and other serialised consumption data formats
 - Add support for ratchet tariffs
