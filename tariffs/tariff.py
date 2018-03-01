@@ -81,16 +81,18 @@ PERIOD_TO_TIMESTEP = {
 
 class RateBand(odin.Resource):
     """A specific band within a block pricing rate structure"""
-    limit = odin.FloatField(null=True, default=9999999.9, use_default_if_not_provided=True)
+    limit = odin.FloatField(null=True, default=999999999.9, use_default_if_not_provided=True)
     rate = odin.FloatField()
 
 
 class Period(odin.Resource):
     """A period within a time-of-use pricing rate structure"""
-    from_hour = odin.IntegerField()
-    from_minute = odin.IntegerField()
-    to_hour = odin.IntegerField()
-    to_minute = odin.IntegerField()
+    from_weekday = odin.IntegerField(min_value=0, null=True, use_default_if_not_provided=True, default=0)
+    to_weekday = odin.IntegerField(max_value=6, null=True, use_default_if_not_provided=True, default=6)
+    from_hour = odin.IntegerField(min_value=0, max_value=23, null=True, use_default_if_not_provided=True, default=0)
+    from_minute = odin.IntegerField(min_value=0, max_value=59, null=True, use_default_if_not_provided=True, default=0)
+    to_hour = odin.IntegerField(min_value=0, max_value=23, null=True, use_default_if_not_provided=True, default=23)
+    to_minute = odin.IntegerField(min_value=0, max_value=59, null=True, use_default_if_not_provided=True, default=59)
 
 
 class Time(odin.Resource):
@@ -108,10 +110,10 @@ class ScheduleItem(odin.Resource):
 class Season(odin.Resource):
     """A season within a seasonal pricing rate structure"""
     name = odin.StringField()
-    from_month = odin.IntegerField()
-    from_day = odin.IntegerField()
-    to_month = odin.IntegerField()
-    to_day = odin.IntegerField()
+    from_month = odin.IntegerField(min_value=1, max_value=12, null=True, use_default_if_not_provided=True, default=1)
+    from_day = odin.IntegerField(min_value=1, max_value=31, null=True, use_default_if_not_provided=True, default=12)
+    to_month = odin.IntegerField(min_value=1, max_value=12, null=True, use_default_if_not_provided=True, default=12)
+    to_day = odin.IntegerField(min_value=1, max_value=31, null=True, use_default_if_not_provided=True, default=31)
 
 
 class Charge(odin.Resource):
@@ -210,9 +212,6 @@ class Tariff(odin.Resource):
             Calculates the cost of energy given a tariff and load.
 
             :param meter_data: a three-column pandas array with datetime, imported energy (kwh), exported energy (kwh)
-            :param step: the time step in minutes of the meter data
-            :param start: an optional datetime to select the commencement of the bill calculation
-            :param end: an optional datetime to select the termination of the bill calculation
             :return: a dictionary containing the charge components (e.g. off_peak, shoulder, peak, total)
         """
 
@@ -240,7 +239,8 @@ class Tariff(odin.Resource):
                                     <= dt.date() <= datetime.date(year=dt.year, month=charge.season.to_month,
                                                                  day=charge.season.to_day):
                                 for period in charge.time.periods:
-                                    if datetime.time(hour=period.from_hour, minute=period.from_minute) < time <= datetime.time(
+                                    if period.from_weekday <= dt.dayofweek <= period.to_weekday and datetime.time(
+                                            hour=period.from_hour, minute=period.from_minute) <= time <= datetime.time(
                                             hour=period.to_hour, minute=period.to_minute):
                                         charge_array, block_accum_dict = self.calc_charge(
                                             self.service + charge_type + charge.season.name + charge.time.name, row,
@@ -260,8 +260,9 @@ class Tariff(odin.Resource):
                         elif charge.time and not charge.season:
                             found = False
                             for period in charge.time.periods:
-                                if datetime.time(hour=period.from_hour, minute=period.from_minute) <= time <= \
-                                        datetime.time(hour=period.to_hour, minute=period.to_minute):
+                                if period.from_weekday <= dt.dayofweek <= period.to_weekday and datetime.time(
+                                        hour=period.from_hour, minute=period.from_minute) <= time <= datetime.time(
+                                        hour=period.to_hour, minute=period.to_minute):
                                     charge_array, block_accum_dict = self.calc_charge(
                                         self.service + charge_type + charge.time.name, row, charge, charge_array, block_accum_dict)
                                     found = True
@@ -283,7 +284,6 @@ class Tariff(odin.Resource):
             Calculates the cost of energy given a tariff and load.
 
             :param meter_data: a three-column pandas array with datetime, imported energy (kwh), exported energy (kwh)
-            :param step: the time step in minutes of the meter data
             :param start: an optional datetime to select the commencement of the bill calculation
             :param end: an optional datetime to select the termination of the bill calculation
             :return: a dictionary containing the charge components (e.g. off_peak, shoulder, peak, total)
