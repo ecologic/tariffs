@@ -2,7 +2,6 @@ import odin
 from odin.codecs import dict_codec
 from collections import defaultdict
 import datetime
-import pandas
 
 
 SERVICE_CHOICES = (
@@ -38,8 +37,6 @@ CONSUMPTION_UNIT_CHOICES = (
     ('btu', 'british thermal units'),
     ('kL', 'kilolitres'),
     ('gal', 'gallons'),
-    ('kWh/kW', 'kWh/kW'), # TODO this doesn't appear to be a meaningful value but used throughout database, investigate
-    ('kWh/hp', 'kWh/hp'), # TODO this doesn't appear to be a meaningful value but used throughout database, investigate
 )
 
 DEMAND_UNIT_CHOICES = (
@@ -142,6 +139,7 @@ class Season(odin.Resource):
 
 class Charge(odin.Resource):
     """A charge component of a tariff structure"""
+    code = odin.StringField(null=True)
     rate = odin.FloatField(null=True)
     rate_bands = odin.ArrayOf(RateBand, null=True)
     rate_schedule = odin.ArrayOf(ScheduleItem, null=True)
@@ -155,7 +153,8 @@ class Charge(odin.Resource):
         season = self.season.name if self.season else None
         time = self.time.name if self.time else None
         scheduled = 'scheduled' if self.rate_schedule else None
-        return str(self.type or '') + str(season or '') + str(time or '') + str(scheduled or '')
+        return str(self.code) + str(self.type or '') + str(season or '') + str(time or '') + str(scheduled or '')
+
 
 class Times(odin.Resource):
     """"""
@@ -196,8 +195,10 @@ class Tariff(odin.Resource):
     times = odin.DictAs(Times, null=True)
     seasons = odin.DictAs(Seasons, null=True)
     net_metering = odin.BooleanField(null=True)
-    billing_period = odin.StringField(choices=PERIOD_CHOICES, null=True, default='monthly', use_default_if_not_provided=True)
-    demand_window = odin.StringField(choices=DEMAND_WINDOW_CHOICES, null=True, default='30min', use_default_if_not_provided=True)
+    billing_period = odin.StringField(choices=PERIOD_CHOICES, null=True, default='monthly',
+                                      use_default_if_not_provided=True)
+    demand_window = odin.StringField(choices=DEMAND_WINDOW_CHOICES, null=True, default='30min',
+                                     use_default_if_not_provided=True)
     consumption_unit = odin.StringField(choices=CONSUMPTION_UNIT_CHOICES, null=True)
     demand_unit = odin.StringField(choices=DEMAND_UNIT_CHOICES, null=True)
 
@@ -243,6 +244,8 @@ class Tariff(odin.Resource):
             Calculates the cost of energy given a tariff and load.
 
             :param meter_data: a three-column pandas array with datetime, imported energy (kwh), exported energy (kwh)
+            :param cost_items: a dictionary containing the charge components (e.g. off_peak, shoulder, peak, total)
+            :param charge_type: a string specifying the charge type, options include 'consumption', 'demand' etc
             :return: a dictionary containing the charge components (e.g. off_peak, shoulder, peak, total)
         """
 
@@ -266,7 +269,7 @@ class Tariff(odin.Resource):
                         if charge.time and charge.season:
                             if datetime.date(year=dt.year, month=charge.season.from_month, day=charge.season.from_day) \
                                     <= dt.date() <= datetime.date(year=dt.year, month=charge.season.to_month,
-                                                                 day=charge.season.to_day):
+                                                                  day=charge.season.to_day):
                                 for period in charge.time.periods:
                                     if period.from_weekday <= dt.dayofweek <= period.to_weekday and datetime.time(
                                             hour=period.from_hour, minute=period.from_minute) <= time <= datetime.time(
@@ -277,7 +280,7 @@ class Tariff(odin.Resource):
                         elif charge.season:
                             if datetime.date(year=dt.year, month=charge.season.from_month, day=charge.season.from_day)\
                                     <= dt.date() <= datetime.date(year=dt.year, month=charge.season.to_month,
-                                                                 day=charge.season.to_day):
+                                                                  day=charge.season.to_day):
                                 cost_items, block_accum_dict = self.calc_charge(
                                     charge.name, row, charge, cost_items, block_accum_dict)
                         elif charge.time:
@@ -290,7 +293,8 @@ class Tariff(odin.Resource):
                         elif charge.rate_schedule:
                             for schedule_item in charge.rate_schedule:
                                 if dt.to_pydatetime() < schedule_item.datetime:
-                                    cost_items[charge.type + 'scheduled']['cost'] += schedule_item.rate * float(row[charge.type])
+                                    cost_items[charge.type + 'scheduled']['cost'] += schedule_item.rate * float(
+                                        row[charge.type])
                                     break
                         else:
                             cost_items, block_accum_dict = self.calc_charge(
@@ -316,6 +320,7 @@ class Tariff(odin.Resource):
             time = charge.time.name if charge.time else None
             cost_items[charge.name] = {
                 'name': charge.name,
+                'code': charge.code,
                 'type': charge.type,
                 'season': season,
                 'time': time,
