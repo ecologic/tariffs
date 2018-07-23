@@ -147,13 +147,14 @@ class Charge(odin.Resource):
     season = odin.ObjectAs(Season, null=True)
     type = odin.StringField(choices=CHARGE_TYPE_CHOICES, null=True, default='consumption',
                             use_default_if_not_provided=True)
+    meter = odin.StringField(null=True)
 
     @odin.calculated_field
     def name(self):
         season = self.season.name if self.season else None
         time = self.time.name if self.time else None
         scheduled = 'scheduled' if self.rate_schedule else None
-        return str(self.code) + str(self.type or '') + str(season or '') + str(time or '') + str(scheduled or '')
+        return str(self.code or '') + str(self.type or '') + str(season or '') + str(time or '') + str(scheduled or '')
 
 
 class Times(odin.Resource):
@@ -225,14 +226,14 @@ class Tariff(odin.Resource):
 
     def calc_charge(self, name, row, charge, cost_items, block_accum_dict):
         if charge.rate:
-            cost_items[name]['cost'] += charge.rate * float(row[charge.type])
+            cost_items[name]['cost'] += charge.rate * float(row[charge.meter or charge.type])
         if charge.rate_bands:
             charge_time_step = float()
             for rate_band_index, rate_band in enumerate(charge.rate_bands):
                 if block_accum_dict[name] > rate_band.limit:
                     continue
                 block_usage = max((min(
-                    (rate_band.limit - block_accum_dict[name], row[charge.type] - block_accum_dict[name])), 0.0))
+                    (rate_band.limit - block_accum_dict[name], row[charge.meter or charge.type] - block_accum_dict[name])), 0.0))
                 charge_time_step += rate_band.rate * block_usage
                 block_accum_dict[name] += block_usage
             cost_items[name]['cost'] += charge_time_step
