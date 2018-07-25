@@ -226,14 +226,21 @@ class Tariff(odin.Resource):
 
     def calc_charge(self, row, charge, cost_items, block_accum_dict):
         if charge.rate:
-            cost_items[charge.name]['cost'] += charge.rate * float(row[charge.meter or charge.type])
+            try:
+                cost_items[charge.name]['cost'] += charge.rate * float(row[charge.meter or charge.type])
+            except KeyError:
+                raise Exception("The specified meter data file has no field named %s" % str(charge.meter or charge.type))
         if charge.rate_bands:
             charge_time_step = float()
             for rate_band_index, rate_band in enumerate(charge.rate_bands):
                 if block_accum_dict[charge.name] > rate_band.limit:
                     continue
-                block_usage = max((min(
-                    (rate_band.limit - block_accum_dict[charge.name], row[charge.meter or charge.type] - block_accum_dict[name])), 0.0))
+                try:
+                    block_usage = max((min(
+                        (rate_band.limit - block_accum_dict[charge.name], row[charge.meter or charge.type] - block_accum_dict[charge.name])), 0.0))
+                except KeyError:
+                    raise Exception(
+                        "The specified meter data file has no field named %s" % str(charge.meter or charge.type))
                 charge_time_step += rate_band.rate * block_usage
                 block_accum_dict[charge.name] += block_usage
             cost_items[charge.name]['cost'] += charge_time_step
