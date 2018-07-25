@@ -224,19 +224,19 @@ class Tariff(odin.Resource):
 
         return list(charge_types)
 
-    def calc_charge(self, name, row, charge, cost_items, block_accum_dict):
+    def calc_charge(self, row, charge, cost_items, block_accum_dict):
         if charge.rate:
-            cost_items[name]['cost'] += charge.rate * float(row[charge.meter or charge.type])
+            cost_items[charge.name]['cost'] += charge.rate * float(row[charge.meter or charge.type])
         if charge.rate_bands:
             charge_time_step = float()
             for rate_band_index, rate_band in enumerate(charge.rate_bands):
-                if block_accum_dict[name] > rate_band.limit:
+                if block_accum_dict[charge.name] > rate_band.limit:
                     continue
                 block_usage = max((min(
-                    (rate_band.limit - block_accum_dict[name], row[charge.meter or charge.type] - block_accum_dict[name])), 0.0))
+                    (rate_band.limit - block_accum_dict[charge.name], row[charge.meter or charge.type] - block_accum_dict[name])), 0.0))
                 charge_time_step += rate_band.rate * block_usage
-                block_accum_dict[name] += block_usage
-            cost_items[name]['cost'] += charge_time_step
+                block_accum_dict[charge.name] += block_usage
+            cost_items[charge.name]['cost'] += charge_time_step
 
         return cost_items, block_accum_dict
 
@@ -275,22 +275,19 @@ class Tariff(odin.Resource):
                                     if period.from_weekday <= dt.dayofweek <= period.to_weekday and datetime.time(
                                             hour=period.from_hour, minute=period.from_minute) <= time <= datetime.time(
                                             hour=period.to_hour, minute=period.to_minute):
-                                        cost_items, block_accum_dict = self.calc_charge(
-                                            charge.name, row, charge, cost_items, block_accum_dict)
+                                        cost_items, block_accum_dict = self.calc_charge(row, charge, cost_items, block_accum_dict)
                                         break
                         elif charge.season:
                             if datetime.date(year=dt.year, month=charge.season.from_month, day=charge.season.from_day)\
                                     <= dt.date() <= datetime.date(year=dt.year, month=charge.season.to_month,
                                                                   day=charge.season.to_day):
-                                cost_items, block_accum_dict = self.calc_charge(
-                                    charge.name, row, charge, cost_items, block_accum_dict)
+                                cost_items, block_accum_dict = self.calc_charge(row, charge, cost_items, block_accum_dict)
                         elif charge.time:
                             for period in charge.time.periods:
                                 if period.from_weekday <= dt.dayofweek <= period.to_weekday and datetime.time(
                                         hour=period.from_hour, minute=period.from_minute) <= time <= datetime.time(
                                         hour=period.to_hour, minute=period.to_minute):
-                                    cost_items, block_accum_dict = self.calc_charge(
-                                        charge.name, row, charge, cost_items, block_accum_dict)
+                                    cost_items, block_accum_dict = self.calc_charge(row, charge, cost_items, block_accum_dict)
                         elif charge.rate_schedule:
                             for schedule_item in charge.rate_schedule:
                                 if dt.to_pydatetime() < schedule_item.datetime:
@@ -298,8 +295,7 @@ class Tariff(odin.Resource):
                                         row[charge.type])
                                     break
                         else:
-                            cost_items, block_accum_dict = self.calc_charge(
-                                charge.type, row, charge, cost_items, block_accum_dict)
+                            cost_items, block_accum_dict = self.calc_charge(row, charge, cost_items, block_accum_dict)
 
         return cost_items
 
