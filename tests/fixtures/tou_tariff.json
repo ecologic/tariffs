@@ -1,0 +1,66 @@
+{
+    "charges": [
+        {
+            "rate": 1.0,
+            "time": {
+                "name": "peak",
+                "periods": [
+                    {
+                        "from_weekday": 0,
+                        "to_weekday": 4,
+                        "from_hour": 14,
+                        "to_hour": 19
+                    }
+                ]
+            }
+        },
+        {
+            "rate": 1.0,
+            "time": {
+                "name": "shoulder",
+                "periods": [
+                    {
+                        "from_weekday": 0,
+                        "to_weekday": 4,
+                        "from_hour": 10,
+                        "to_hour": 13
+                    },
+                    {
+                        "from_weekday": 0,
+                        "to_weekday": 4,
+                        "from_hour": 20,
+                        "to_hour": 21
+                    }
+                ]
+            }
+        },
+        {
+            "rate": 1.0,
+            "time": {
+                "name": "off-peak",
+                "periods": [
+                    {
+                        "from_weekday": 0,
+                        "to_weekday": 4,
+                        "from_hour": 0,
+                        "from_minute": 0,
+                        "to_hour": 9,
+                        "to_minute": 59
+                    },
+                    {
+                        "from_weekday": 0,
+                        "to_weekday": 4,
+                        "from_hour": 22,
+                        "from_minute": 0,
+                        "to_hour": 23,
+                        "to_minute": 59
+                    },
+                    {
+                        "from_weekday": 5,
+                        "to_weekday": 6
+                    }
+                ]
+            }
+        }
+    ]
+}

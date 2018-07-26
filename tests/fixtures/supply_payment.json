@@ -1,0 +1,8 @@
+{
+    "charges": [
+        {
+            "rate": -1.0,
+            "type": "generation"
+        }
+    ]
+}

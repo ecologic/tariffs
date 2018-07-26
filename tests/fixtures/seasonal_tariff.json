@@ -1,0 +1,24 @@
+{
+    "charges": [
+        {
+            "rate": 1.0,
+            "season": {
+                "name": "summer",
+                "from_month": 1,
+                "from_day": 1,
+                "to_month": 3,
+                "to_day": 31
+            }
+        },
+        {
+            "rate": 1.0,
+            "season": {
+                "name": "winter",
+                "from_month": 4,
+                "from_day": 1,
+                "to_month": 12,
+                "to_day": 31
+            }
+        }
+    ]
+}

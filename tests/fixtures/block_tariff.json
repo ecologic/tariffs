@@ -1,0 +1,15 @@
+{
+    "charges": [
+        {
+            "rate_bands": [
+                {
+                    "limit": 10,
+                    "rate": 1.0
+                },
+                {
+                    "rate": 1.0
+                }
+            ]
+        }
+    ]
+}
