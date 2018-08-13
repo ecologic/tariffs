@@ -232,15 +232,17 @@ class Tariff(odin.Resource):
                 raise Exception("The specified meter data file has no field named %s" % str(charge.meter or charge.type))
         if charge.rate_bands:
             charge_time_step = float()
+            prev_block_usage = 0.0
             for rate_band_index, rate_band in enumerate(charge.rate_bands):
                 if block_accum_dict[charge.name] > rate_band.limit:
                     continue
                 try:
                     block_usage = max((min(
-                        (rate_band.limit - block_accum_dict[charge.name], row[charge.meter or charge.type] - block_accum_dict[charge.name])), 0.0))
+                        (rate_band.limit - block_accum_dict[charge.name], row[charge.meter or charge.type] - prev_block_usage)), 0.0))
                 except KeyError:
                     raise Exception(
                         "The specified meter data file has no field named %s" % str(charge.meter or charge.type))
+                prev_block_usage += block_usage
                 charge_time_step += rate_band.rate * block_usage
                 block_accum_dict[charge.name] += block_usage
             cost_items[charge.name]['cost'] += charge_time_step
