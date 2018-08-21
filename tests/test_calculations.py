@@ -24,6 +24,12 @@ class TestTariff(object):
         return tariff
 
     @pytest.fixture
+    def fixed_tariff(self):
+        with open('./fixtures/fixed_tariff.json') as f:
+            tariff = json_codec.load(f, Tariff)
+        return tariff
+
+    @pytest.fixture
     def block_tariff(self):
         with open('./fixtures/block_tariff.json') as f:
             tariff = json_codec.load(f, Tariff)
@@ -58,6 +64,11 @@ class TestTariff(object):
         with open('./fixtures/demand_tariff.json') as f:
             tariff = json_codec.load(f, Tariff)
         return tariff
+
+    def test_fixed_tariff(self, fixed_tariff, meter_data):
+        expected_bill = 12.0
+        actual_bill = fixed_tariff.apply(meter_data)
+        assert actual_bill.cost == expected_bill
 
     def test_block_tariff(self, block_tariff, meter_data):
         expected_bill = 35040.0

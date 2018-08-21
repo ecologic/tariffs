@@ -221,6 +221,8 @@ class Tariff(odin.Resource):
                 charge_types.add('consumption')
             if charge.type == 'generation':
                 charge_types.add('generation')
+            if charge.type == 'fixed':
+                charge_types.add('fixed')
 
         return list(charge_types)
 
@@ -349,6 +351,12 @@ class Tariff(odin.Resource):
             demand_data = meter_data.resample(PERIOD_TO_TIMESTEP[self.demand_window]).mean()
             peak_monthly = demand_data.resample(PERIOD_TO_TIMESTEP[self.billing_period]).max()
             cost_items.update(self.apply_by_charge_type(peak_monthly, cost_items, 'demand'))
+
+        if 'fixed' in self.charge_types:
+            billing_periods = len(meter_data.resample(PERIOD_TO_TIMESTEP[self.billing_period]).mean())
+            for charge in self.charges:
+                if charge.type == 'fixed':
+                    cost_items[charge.name]['cost'] = billing_periods * charge.rate
 
         # Transform the output data into the specified output format
         cost_dict = {
