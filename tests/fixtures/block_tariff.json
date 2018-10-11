@@ -1,6 +1,7 @@
 {
     "charges": [
         {
+            "type": "consumption",
             "rate_bands": [
                 {
                     "limit": 10,

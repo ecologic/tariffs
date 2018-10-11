@@ -42,15 +42,14 @@ Firstly define your tariff as a JSON data structure e.g. for a very simple block
                 }
             ]
         }
-    ],
-    "service": "electricity",
+    ]
 }
 ```
 
 Next create a CSV file with the time-stamped load data as shown.
 
 ```
-datetime,electricity_imported
+datetime,consumption
 01/01/2018 00:00,0.1
 01/01/2018 00:30,0.2
 ..etc

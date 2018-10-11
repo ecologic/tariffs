@@ -1,7 +1,6 @@
 {
     "charges": [
         {
-            "type": "demand",
             "rate": 1.0
         }
     ]
